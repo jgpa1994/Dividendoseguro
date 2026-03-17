@@ -58,14 +58,35 @@ function parseCSVLine(line) {
 }
 
 function sheetToCompanies(rows) {
+  // Parse number handling commas as decimal separator
+  const num = v => {
+    if (v === null || v === undefined || v === '') return null;
+    let s = String(v).replace('%','').replace(/\s/g,'').replace(',','.');
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  };
+  // Parse percentage (could be "4.98%", "4,98%", or 0.0498)
+  const pct = v => {
+    if (v === null || v === undefined || v === '') return null;
+    let s = String(v).replace('%','').replace(/\s/g,'').replace(',','.');
+    let n = parseFloat(s);
+    if (isNaN(n)) return null;
+    // If it looks like a decimal (0.0498), convert to percentage
+    if (Math.abs(n) < 1 && Math.abs(n) > 0) n = Math.round(n * 1000) / 10;
+    return n;
+  };
   return rows.map(r => {
-    const num = v => { const n = parseFloat(v); return isNaN(n) ? null : n; };
-    // Parse DPS history
+    // Parse DPS from individual year columns (DPS_2012, DPS_2013, etc.)
     let dps = [];
-    if (r.DPS_HISTORICO) {
+    for (let y = 2012; y <= 2030; y++) {
+      const v = num(r['DPS_' + y]);
+      if (v !== null && v > 0) dps.push({ y: y, d: v });
+    }
+    // Fallback: try DPS_HISTORICO format "2012:0.8|2013:0.92"
+    if (dps.length === 0 && r.DPS_HISTORICO) {
       dps = r.DPS_HISTORICO.split('|').map(p => {
         const [y, d] = p.split(':');
-        return { y: parseInt(y), d: parseFloat(d) };
+        return { y: parseInt(y), d: parseFloat(String(d).replace(',','.')) };
       }).filter(d => !isNaN(d.y) && !isNaN(d.d));
     }
     return {
@@ -75,19 +96,18 @@ function sheetToCompanies(rows) {
       l: r.LECTURA,
       sec: r.SECTOR,
       grp: r.GRUPO,
-      yrs: parseInt(r['AÑOS_INC']) || 0,
-      pay: num(r.PAYOUT),
-      cfp: num(r.CF_PAYOUT),
+      yrs: parseInt(r['AÑOS_INC']) || parseInt(r['ANOS_INC']) || 0,
+      pay: pct(r.PAYOUT),
+      cfp: pct(r.CF_PAYOUT),
       dne: num(r.DN_EBITDA),
-      mn: num(r.MARGEN_NETO),
+      mn: pct(r.MARGEN_NETO),
       roic: num(r.ROIC),
-      dg5: num(r.CREC_DPS_5A),
-      dg1: num(r.CREC_DPS_1A),
-      eg5: num(r.CREC_EPS_5A),
+      dg5: pct(r.CREC_DPS_5A),
+      dg1: pct(r.CREC_DPS_1A),
+      eg5: pct(r.CREC_EPS_5A),
       pcm: num(r.PRECIO_COMPRA),
       daf: num(r.DIV_ANUAL_FWD),
       dps: dps,
-      // Live columns from Google Sheets (filled by GOOGLEFINANCE)
       pr: num(r.PRECIO_LIVE),
       rpd: num(r.RPD_LIVE),
       ppc: num(r.PCT_A_PC),
