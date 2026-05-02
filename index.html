@@ -146,8 +146,14 @@ function num(v) {
 }
 
 function pct(v) {
-  const n = num(v);
-  if (n === null) return null;
+  if (v === "" || v === undefined || v === null) return null;
+  const s = String(v).trim();
+  const hasPercent = s.includes("%");
+  const n = parseFloat(s.replace(",", ".").replace("%", ""));
+  if (isNaN(n)) return null;
+  // Si el CSV trae el símbolo '%', el valor ya está expresado en porcentaje (ej: "0,91%" => 0.91)
+  if (hasPercent) return n;
+  // Si viene plano, asumimos que valores |n|<1 son decimales (0.245 => 24.5%) y el resto ya son porcentaje
   return Math.abs(n) < 1 ? n * 100 : n;
 }
 
@@ -423,10 +429,10 @@ function openFicha(ticker) {
   const cfPayoutData = hist.filter(h => h.cfpsPayout !== null);
   if (cfPayoutData.length > 1) ratioCharts.push({ id: "chart-cfpayout", title: "CF payout ratio", current: c.cfPayout, data: cfPayoutData.map(h => ({ year: h.year, value: h.cfpsPayout })), color: "#7c3aed" });
 
-  const mnData = hist.filter(h => h.mn !== null);
+  const mnData = hist.filter(h => h.mn !== null && h.year >= 2018);
   if (mnData.length > 1) ratioCharts.push({ id: "chart-mn", title: "Margen neto", current: c.marginNeto, data: mnData.map(h => ({ year: h.year, value: h.mn })), color: "#ea580c" });
 
-  const roicData = hist.filter(h => h.roic !== null);
+  const roicData = hist.filter(h => h.roic !== null && h.year >= 2018);
   if (roicData.length > 1) ratioCharts.push({ id: "chart-roic", title: "ROIC", current: c.roic, data: roicData.map(h => ({ year: h.year, value: h.roic })), color: "#2563eb" });
 
   if (isReit) {
@@ -446,8 +452,8 @@ function openFicha(ticker) {
     fichaHtml += `</div>`;
   }
 
-  // DN/EBITDA if available
-  const dnData = hist.filter(h => h.dnEbitda !== null);
+  // DN/EBITDA if available (desde 2018)
+  const dnData = hist.filter(h => h.dnEbitda !== null && h.year >= 2018);
   if (dnData.length > 1) {
     fichaHtml += `<div class="ficha-section">
       <div class="ficha-section-title">Deuda neta / EBITDA</div>
