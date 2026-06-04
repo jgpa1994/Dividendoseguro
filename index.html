@@ -76,7 +76,7 @@ tbody td{padding:10px 12px;font-size:13px;border-bottom:1px solid #f3f4f6;white-
 .growth-label{color:#6b7280}
 .growth-value{font-weight:600}
 .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-.chart-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px 20px}
+.chart-card{background:#fff;border:1.5px solid #e5e7eb;border-radius:12px;padding:16px 20px;min-width:0;overflow:hidden}
 .chart-card-title{font-size:14px;font-weight:700;margin-bottom:2px}
 .chart-card-sub{font-size:12px;color:#6b7280;margin-bottom:10px}
 .chart-wrap{position:relative;height:180px}
@@ -91,7 +91,7 @@ tbody td{padding:10px 12px;font-size:13px;border-bottom:1px solid #f3f4f6;white-
 .tarjeta-toolbar button,.btn-download{padding:10px 20px;background:#16a34a;color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:background .2s}
 .tarjeta-toolbar button:hover,.btn-download:hover{background:#15803d}
 .btn-download{margin:8px 4px}
-.tarjeta-card{background:#fff;border:2px solid #e5e7eb;border-radius:14px;padding:24px 28px;margin-bottom:16px}
+.tarjeta-card{background:#fff;border:2px solid #e5e7eb;border-radius:14px;padding:24px 28px;margin-bottom:16px;overflow:hidden}
 .tarjeta-header{display:flex;align-items:center;gap:14px;margin-bottom:20px}
 .tarjeta-avatar{width:48px;height:48px;border-radius:10px;background:#eff6ff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;color:#2563eb}
 .tarjeta-title{font-size:18px;font-weight:700}
@@ -114,7 +114,7 @@ tbody td{padding:10px 12px;font-size:13px;border-bottom:1px solid #f3f4f6;white-
 .tarjeta-chart-title{font-size:13px;font-weight:700;margin-bottom:2px}
 .tarjeta-chart-sub{font-size:11px;color:#6b7280;margin-bottom:10px}
 .tarjeta-charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
-.tarjeta-chart-card{border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px}
+.tarjeta-chart-card{border:1.5px solid #e5e7eb;border-radius:10px;padding:14px 16px;min-width:0;overflow:hidden}
 .tarjeta-chart-card .title{font-size:13px;font-weight:700;margin-bottom:2px}
 .tarjeta-chart-card .sub{font-size:11px;color:#6b7280;margin-bottom:10px}
 .tarjeta-footer{border-top:1.5px solid #e5e7eb;padding-top:12px;text-align:center;font-size:12px;color:#6b7280}
@@ -207,6 +207,7 @@ function processMain(rows) {
     score: num(r.PUNTUACION),
     reading: r.LECTURA || "",
     sector: r.SECTOR || "",
+    industria: r.INDUSTRIA || "",
     group: r.GRUPO || "",
     yrsInc: num(r["AÑOS_INC"]),
     payout: pct(r.PAYOUT),
@@ -382,7 +383,7 @@ function openFicha(ticker) {
         <div class="ficha-avatar">${c.ticker}</div>
         <div>
           <div class="ficha-title">${c.name}</div>
-          <div class="ficha-subtitle">${c.sector}${c.group ? " · " + c.group : ""}</div>
+          <div class="ficha-subtitle">${c.industria || c.sector}${c.sector && c.industria ? " · " + c.sector : ""}</div>
         </div>
       </div>
 
@@ -636,7 +637,7 @@ function generateTarjeta() {
       <div class="tarjeta-avatar">${c.ticker}</div>
       <div>
         <div class="tarjeta-title">${c.name}</div>
-        <div class="tarjeta-sub">${c.sector}${c.group ? " · " + c.group : ""}</div>
+        <div class="tarjeta-sub">${c.industria || c.sector}${c.sector && c.industria ? " · " + c.sector : ""}</div>
       </div>
     </div>
     <div class="tarjeta-metrics">
