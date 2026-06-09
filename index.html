@@ -225,9 +225,7 @@ function processMain(rows) {
     pctToBuy: pct(r.PCT_A_PC),
     rpdMedia5: pct(r.RPD_MEDIA_5A),
     crecDpsE1: pct(r.CREC_DPS_E1),
-    dps: [2012,2013,2014,2015,2016,2017,2018,2019,2020,2021,2022,2023,2024,2025].map(y => ({
-      year: y, value: num(r["DPS_" + y])
-    })).filter(d => d.value !== null)
+    dps: [] // populated from HISTORICO_EXPORT after load
   }));
 }
 
@@ -900,6 +898,12 @@ async function init() {
     const [t1, t2] = await Promise.all([r1.text(), r2.text()]);
     companies = processMain(parseCSV(t1));
     histData = processHist(parseCSV(t2));
+
+    // Build DPS array for each company from HISTORICO_EXPORT (source of truth)
+    companies.forEach(c => {
+      const h = histData[c.ticker] || [];
+      c.dps = h.filter(x => x.dps !== null && x.year !== null).map(x => ({ year: x.year, value: x.dps }));
+    });
 
     if (window.location.hash.startsWith("#/tarjeta")) {
       renderTarjetaPage();
