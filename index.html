@@ -904,6 +904,11 @@ async function downloadCombined() {
   const btn = event.target;
   btn.textContent = "Generando...";
   btn.disabled = true;
+  // Temporarily hide the fundamentales card header so it isn't duplicated
+  const fundCard = document.getElementById("tarjeta-fundamentos");
+  const fundHeader = fundCard ? fundCard.querySelector(".tarjeta-header") : null;
+  const prevDisplay = fundHeader ? fundHeader.style.display : null;
+  if (fundHeader) fundHeader.style.display = "none";
   try {
     const canvas = await html2canvas(el, { backgroundColor: "#ffffff", scale: 2, useCORS: true, logging: false });
     const link = document.createElement("a");
@@ -914,6 +919,7 @@ async function downloadCombined() {
   } catch (e) {
     alert("Error generando imagen. Intenta de nuevo.");
   }
+  if (fundHeader) fundHeader.style.display = prevDisplay;
   btn.textContent = "⬇ Descargar combinada";
   btn.disabled = false;
 }
