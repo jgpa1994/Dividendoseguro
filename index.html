@@ -182,8 +182,15 @@ function num(v) {
 }
 
 function pct(v) {
-  const n = num(v);
+  if (v === "" || v === undefined || v === null) return null;
+  const s = String(v).trim();
+  const hasPercentSign = s.includes("%");
+  const n = num(s);
   if (n === null) return null;
+  // If the value already came with a "%" sign, it's already a percentage — never multiply.
+  if (hasPercentSign) return n;
+  // No "%" sign: a value below 1 is a decimal fraction (0.6267 = 62.67%); 1 or above is
+  // assumed to already be in percentage units (e.g. a live yield like 2.93).
   return Math.abs(n) < 1 ? n * 100 : n;
 }
 
@@ -664,6 +671,7 @@ function renderTarjetaPage() {
     <div id="tarjeta-actions" style="display:none;margin-bottom:16px">
       <button class="btn-download" onclick="downloadCard('tarjeta-resumen')">⬇ Descargar resumen</button>
       <button class="btn-download" onclick="downloadCard('tarjeta-fundamentos')">⬇ Descargar fundamentales</button>
+      <button class="btn-download" onclick="downloadCombined()">⬇ Descargar combinada</button>
     </div>
     <div id="tarjeta-output"></div>
   </div>`;
@@ -887,6 +895,26 @@ async function downloadCard(elementId) {
     alert("Error generando imagen. Intenta de nuevo.");
   }
   btn.textContent = elementId === "tarjeta-resumen" ? "⬇ Descargar resumen" : "⬇ Descargar fundamentales";
+  btn.disabled = false;
+}
+
+async function downloadCombined() {
+  const el = document.getElementById("tarjeta-output");
+  if (!el) return;
+  const btn = event.target;
+  btn.textContent = "Generando...";
+  btn.disabled = true;
+  try {
+    const canvas = await html2canvas(el, { backgroundColor: "#ffffff", scale: 2, useCORS: true, logging: false });
+    const link = document.createElement("a");
+    const ticker = document.getElementById("tarjeta-select").value;
+    link.download = `${ticker}_completa.png`;
+    link.href = canvas.toDataURL("image/png");
+    link.click();
+  } catch (e) {
+    alert("Error generando imagen. Intenta de nuevo.");
+  }
+  btn.textContent = "⬇ Descargar combinada";
   btn.disabled = false;
 }
 
