@@ -272,6 +272,22 @@ let filterReading = "";
 let sortCol = "score";
 let sortDir = -1;
 
+// Registry of active Chart.js instances so we can destroy them and avoid memory leaks.
+let activeCharts = [];
+function newChart(canvasEl, config) {
+  if (!canvasEl) return null;
+  // Destroy any chart already bound to this canvas (e.g. when regenerating the same card).
+  const existing = Chart.getChart(canvasEl);
+  if (existing) existing.destroy();
+  const chart = new Chart(canvasEl, config);
+  activeCharts.push(chart);
+  return chart;
+}
+function destroyCharts() {
+  activeCharts.forEach(ch => { try { ch.destroy(); } catch (e) {} });
+  activeCharts = [];
+}
+
 async function loadData() {
   await init();
 }
@@ -559,7 +575,7 @@ function renderFichaCharts(c, hist, ratioCharts, dnData, ffoIntData) {
   // DPS bar chart
   const dpsCanvas = document.getElementById("chart-dps");
   if (dpsCanvas && c.dps.length > 0) {
-    new Chart(dpsCanvas, {
+    newChart(dpsCanvas, {
       type: "bar",
       data: {
         labels: c.dps.map(d => String(d.year)),
@@ -585,7 +601,7 @@ function renderFichaCharts(c, hist, ratioCharts, dnData, ffoIntData) {
   const affopsData = hist.filter(h => h.affops !== null);
   const affopsCanvas = document.getElementById("chart-affops");
   if (affopsCanvas && affopsData.length > 1) {
-    new Chart(affopsCanvas, {
+    newChart(affopsCanvas, {
       type: "bar",
       data: {
         labels: affopsData.map(d => String(d.year)),
@@ -611,7 +627,7 @@ function renderFichaCharts(c, hist, ratioCharts, dnData, ffoIntData) {
   ratioCharts.forEach(ch => {
     const canvas = document.getElementById(ch.id);
     if (!canvas || ch.data.length < 2) return;
-    new Chart(canvas, {
+    newChart(canvas, {
       type: "line",
       data: {
         labels: ch.data.map(d => String(d.year)),
@@ -640,7 +656,7 @@ function renderFichaCharts(c, hist, ratioCharts, dnData, ffoIntData) {
   // DN/EBITDA bar chart
   const dnCanvas = document.getElementById("chart-dn");
   if (dnCanvas && dnData.length > 1) {
-    new Chart(dnCanvas, {
+    newChart(dnCanvas, {
       type: "bar",
       data: {
         labels: dnData.map(d => String(d.year)),
@@ -665,7 +681,7 @@ function renderFichaCharts(c, hist, ratioCharts, dnData, ffoIntData) {
   // FFO/Intereses bar chart
   const ffoIntCanvas = document.getElementById("chart-ffoint");
   if (ffoIntCanvas && ffoIntData && ffoIntData.length > 1) {
-    new Chart(ffoIntCanvas, {
+    newChart(ffoIntCanvas, {
       type: "bar",
       data: {
         labels: ffoIntData.map(d => String(d.year)),
@@ -689,6 +705,7 @@ function renderFichaCharts(c, hist, ratioCharts, dnData, ffoIntData) {
 }
 
 function closeFicha() {
+  destroyCharts();
   const el = document.getElementById("ficha-container");
   if (el) el.remove();
   document.body.style.overflow = "";
@@ -715,9 +732,9 @@ function renderTarjetaPage() {
       <button onclick="generateTarjeta()">Generar</button>
     </div>
     <div id="tarjeta-actions" style="display:none;margin-bottom:16px">
-      <button class="btn-download" onclick="downloadCard('tarjeta-resumen')">⬇ Descargar resumen</button>
-      <button class="btn-download" onclick="downloadCard('tarjeta-fundamentos')">⬇ Descargar fundamentales</button>
-      <button class="btn-download" onclick="downloadCombined()">⬇ Descargar combinada</button>
+      <button class="btn-download" onclick="downloadCard('tarjeta-resumen', this)">⬇ Descargar resumen</button>
+      <button class="btn-download" onclick="downloadCard('tarjeta-fundamentos', this)">⬇ Descargar fundamentales</button>
+      <button class="btn-download" onclick="downloadCombined(this)">⬇ Descargar combinada</button>
     </div>
     <div id="tarjeta-output"></div>
   </div>`;
@@ -731,6 +748,7 @@ function generateTarjeta() {
   if (!ticker) return;
   const c = companies.find(x => x.ticker === ticker);
   if (!c) return;
+  destroyCharts();
   const hist = histData[ticker] || [];
   const scoreColor = COLORS[c.reading] || "#6b7280";
 
@@ -872,7 +890,7 @@ function generateTarjeta() {
     function miniLine(id, data, color, fmt, sugMax) {
       const el = document.getElementById(id);
       if (!el || data.length < 2) return;
-      new Chart(el, {
+      newChart(el, {
         type: "line",
         data: { labels: data.map(d => String(d.year || d.x)), datasets: [{ data: data.map(d => d.value || d.y), borderColor: color, backgroundColor: color + "18", fill: true, tension: 0.3, pointRadius: 3, pointBackgroundColor: color, borderWidth: 2 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false,
@@ -886,7 +904,7 @@ function generateTarjeta() {
     // DPS bar chart
     const dpsEl = document.getElementById("tc-dps");
     if (dpsEl && c.dps.length > 0) {
-      new Chart(dpsEl, {
+      newChart(dpsEl, {
         type: "bar",
         data: { labels: c.dps.map(d => String(d.year)), datasets: [{ data: c.dps.map(d => d.value), backgroundColor: c.dps.map((_, i) => i === c.dps.length - 1 ? "#2563eb" : "#16a34a"), borderRadius: 3, barPercentage: 0.7 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false,
@@ -907,7 +925,7 @@ function generateTarjeta() {
     // AFFOPS bar (REITs)
     const affopsEl = document.getElementById("tc-affops");
     if (affopsEl && affopsData.length > 1) {
-      new Chart(affopsEl, {
+      newChart(affopsEl, {
         type: "bar",
         data: { labels: affopsData.map(d => String(d.year)), datasets: [{ data: affopsData.map(d => d.affops), backgroundColor: affopsData.map((_, i) => i === affopsData.length - 1 ? "#2563eb" : "#16a34a"), borderRadius: 3, barPercentage: 0.7 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false,
@@ -921,7 +939,7 @@ function generateTarjeta() {
     // DN/EBITDA bar
     const dnEl = document.getElementById("tc-dn");
     if (dnEl && dnData.length > 1) {
-      new Chart(dnEl, {
+      newChart(dnEl, {
         type: "bar",
         data: { labels: dnData.map(d => String(d.year)), datasets: [{ data: dnData.map(d => d.dnEbitda), backgroundColor: dnData.map(d => d.dnEbitda <= 3 ? "#16a34a" : "#d97706"), borderRadius: 3, barPercentage: 0.7 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false,
@@ -935,7 +953,7 @@ function generateTarjeta() {
     // FFO/Intereses bar
     const ffoIntEl = document.getElementById("tc-ffoint");
     if (ffoIntEl && ffoIntData.length > 1) {
-      new Chart(ffoIntEl, {
+      newChart(ffoIntEl, {
         type: "bar",
         data: { labels: ffoIntData.map(d => String(d.year)), datasets: [{ data: ffoIntData.map(d => d.ffoInt), backgroundColor: ffoIntData.map(d => d.ffoInt >= 2 ? "#16a34a" : "#d97706"), borderRadius: 3, barPercentage: 0.7 }] },
         options: { responsive: true, maintainAspectRatio: false, animation: false,
@@ -948,10 +966,9 @@ function generateTarjeta() {
   }, 100);
 }
 
-async function downloadCard(elementId) {
+async function downloadCard(elementId, btn) {
   const el = document.getElementById(elementId);
   if (!el) return;
-  const btn = event.target;
   btn.textContent = "Generando...";
   btn.disabled = true;
   try {
@@ -969,10 +986,9 @@ async function downloadCard(elementId) {
   btn.disabled = false;
 }
 
-async function downloadCombined() {
+async function downloadCombined(btn) {
   const el = document.getElementById("tarjeta-output");
   if (!el) return;
-  const btn = event.target;
   btn.textContent = "Generando...";
   btn.disabled = true;
   // Temporarily hide the fundamentales card header so it isn't duplicated
