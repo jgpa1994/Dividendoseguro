@@ -232,6 +232,7 @@ function processMain(rows) {
     pctToBuy: pct(r.PCT_A_PC),
     rpdMedia5: pct(r.RPD_MEDIA_5A),
     crecDpsE1: pct(r.CREC_DPS_E1),
+    beta: (num(r.BETA_GOOGLE) !== null ? num(r.BETA_GOOGLE) : num(r.BETA)),
     dps: [] // populated from HISTORICO_EXPORT after load
   }));
 }
@@ -434,8 +435,8 @@ function openFicha(ticker) {
           <div class="value">${c.rpdLive !== null ? c.rpdLive.toFixed(2) + "%" : "—"}</div>
         </div>
         <div class="ficha-row-item">
-          <div class="label">RPD media 5A</div>
-          <div class="value">${rpdMedia5 !== null ? rpdMedia5.toFixed(2) + "%" : "—"}</div>
+          <div class="label">Beta</div>
+          <div class="value">${c.beta !== null ? c.beta.toFixed(1) : "—"}</div>
         </div>
       </div>`;
 
@@ -450,6 +451,7 @@ function openFicha(ticker) {
       <div class="growth-row"><span class="growth-label">Crec. DPS 1A</span><span class="growth-value ${c.crecDps1 !== null ? (c.crecDps1 >= 0 ? 'positive' : 'negative') : ''}">${c.crecDps1 !== null ? fmtPct(c.crecDps1) : "—"}</span></div>
       <div class="growth-row"><span class="growth-label">Crec. DPS est. +1A</span><span class="growth-value ${crecDpsEst !== null ? (crecDpsEst >= 0 ? 'positive' : 'negative') : ''}">${crecDpsEst !== null ? fmtPct(crecDpsEst) : "—"}</span></div>
       <div class="growth-row"><span class="growth-label">Años de incremento</span><span class="growth-value">${c.yrsInc !== null ? Math.round(c.yrsInc) : "—"}</span></div>
+      <div class="growth-row"><span class="growth-label">RPD media 5A</span><span class="growth-value">${rpdMedia5 !== null ? rpdMedia5.toFixed(2) + "%" : "—"}</span></div>
     </div>
   </div>`;
 
@@ -758,7 +760,11 @@ function generateTarjeta() {
         <div class="sub" style="color:#6b7280">${c.yrsInc !== null ? Math.round(c.yrsInc) + " años de incremento" : ""}</div>
       </div>
     </div>
-    <div class="tarjeta-row2">
+    <div class="tarjeta-row2" style="grid-template-columns:repeat(3,1fr)">
+      <div class="tarjeta-row2-item">
+        <div class="label">Beta</div>
+        <div class="value">${c.beta !== null ? c.beta.toFixed(1) : "—"}</div>
+      </div>
       <div class="tarjeta-row2-item">
         <div class="label">RPD media 5A</div>
         <div class="value">${c.rpdMedia5 !== null ? c.rpdMedia5.toFixed(2) + "%" : "—"}</div>
