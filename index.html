@@ -187,11 +187,10 @@ function pct(v) {
   const hasPercentSign = s.includes("%");
   const n = num(s);
   if (n === null) return null;
-  // If the value already came with a "%" sign, it's already a percentage — never multiply.
+  // Values that already carry a "%" sign are percentages as-is (e.g. "0,33%", "57,2%").
   if (hasPercentSign) return n;
-  // No "%" sign: a value below 1 is a decimal fraction (0.6267 = 62.67%); 1 or above is
-  // assumed to already be in percentage units (e.g. a live yield like 2.93).
-  return Math.abs(n) < 1 ? n * 100 : n;
+  // Values without a "%" sign are decimal fractions (0,2 = 20%; 1,23 = 123%) → convert.
+  return n * 100;
 }
 
 function fmtPct(v, decimals) {
