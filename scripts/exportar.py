@@ -27,7 +27,11 @@ NOMBRE_ESPECIAL = {"JPMORGAN CHASE": "JPMorgan Chase", "MCDONALD'S": "McDonald's
                    "PEPSICO": "PepsiCo", "UNITEDHEALTH GROUP": "UnitedHealth Group", "BLACKROCK": "BlackRock",
                    "LYONDELLBASELL": "LyondellBasell", "NEXTERA ENERGY": "NextEra Energy", "W. P. CAREY": "W. P. Carey",
                    "T. ROWE PRICE": "T. Rowe Price", "AFLAC": "Aflac", "ABBOTT LABORATORIES": "Abbott Laboratories",
-                   "PROCTER AND GAMBLE": "Procter & Gamble", "AIR PRODUCTS AND CHEMICALS": "Air Products and Chemicals"}
+                   "PROCTER AND GAMBLE": "Procter & Gamble", "AIR PRODUCTS AND CHEMICALS": "Air Products and Chemicals",
+                   "MGE ENERGY": "MGE Energy", "RLI CORP": "RLI Corp", "ABM INDUSTRIES": "ABM Industries", "MSA SAFETY": "MSA Safety",
+                   "PPG INDUSTRIES": "PPG Industries", "RPM INTERNATIONAL": "RPM International", "H.B. FULLER": "H.B. Fuller",
+                   "W.W. GRAINGER": "W.W. Grainger", "H2O AMERICA": "H2O America", "ABBVIE": "AbbVie",
+                   "STANLEY BLACK & DECKER": "Stanley Black & Decker"}
 SECTOR = {"TECNOLOGÍA": "Tecnología", "SALUD": "Salud", "REAL ESTATE": "Inmobiliario (REIT)", "INDUSTRIAL": "Industrial",
           "UTILITIES": "Utilities", "SERVICIOS FINANCIEROS": "Servicios financieros", "MATERIALES BASICOS": "Materiales básicos",
           "CONSUMO DEFENSIVO": "Consumo defensivo", "CONSUMO CICLICO": "Consumo cíclico", "ENERGÍA": "Energía",
