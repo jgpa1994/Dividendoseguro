@@ -104,7 +104,7 @@ def main(xlsx):
             avisos.append(f"{tk}: rentabilidad por dividendo rara ({rpd:.1%})")
         pay = ult("AFFO_PAYOUT") if es_reit else ult("EPS_PAYOUT")
         if pay is not None and pay < 0:
-            avisos.append(f"{tk}: payout negativo ({pay:.0%}) por beneficio negativo")
+            avisos.append(f"{tk}: payout negativo ({pay:.0%}) por pérdidas: no puntúa")
         empresas.append({
             "id": re.sub(r"[^a-z0-9]+", "-", corto.lower()).strip("-"),
             "ticker": corto, "mercado": exch.upper() or None, "tikr": tk,

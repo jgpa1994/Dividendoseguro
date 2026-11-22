@@ -98,6 +98,8 @@ def puntuar(tk, emp, rows, val, refs):
             ref = 0  # XLOOKUP de celda vacía devuelve 0 en Excel
         if v is not None and not isinstance(ref, str):
             p = 1 if (v <= ref if sense == "le" else v >= ref) else 0
+            if col in ("PAYOUT_RATIO", "FCF_PAYOUT", "AFFO_PAYOUT") and v < 0:
+                p = 0  # v31: payout negativo (pérdidas) no puntúa
         pf += p * (pond.get(g, {}).get(col) or 0)
         det[col] = (v, ref, p)
     # Regla v29: mitad por >=5 años subiendo, mitad por >=10 años sin recortar
