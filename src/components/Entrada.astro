@@ -1,0 +1,26 @@
+---
+import empresas from '../data/companies.json';
+import { COLOR } from '../lib/fmt';
+interface Props { entrada: any; compacta?: boolean }
+const { entrada, compacta = false } = Astro.props;
+const d = entrada.data;
+const lect = (n: number) => n >= 80 ? 'Muy seguro' : n >= 60 ? 'Seguro' : n >= 49 ? 'Límite' : 'No seguro';
+const TIPO: Record<string, string> = { 'Revisión de nota': '#2f6fd6', 'Confirmación de nota': '#15803d', 'Noticia': '#4a5a52', 'Recorte': '#c2410c', 'Resultados': '#7c3aed', 'Artículo': '#0f3d2e' };
+const emp = d.empresas.map((id: string) => empresas.find(e => e.id === id)).filter(Boolean);
+const f = d.fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+---
+<article class="card entrada" style={compacta ? 'padding:16px 18px' : ''}>
+  <div class="tiny" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <span class="badge" style={`background:${TIPO[d.tipo]}14;color:${TIPO[d.tipo]}`}>{d.tipo}</span>
+    <span>{f}</span>
+    {emp.map((e: any) => <a href={`/empresa/${e.id}/`} class="small" style="font-weight:700">{e.ticker}</a>)}
+  </div>
+  <h3 style="margin:8px 0 6px;font-family:var(--serif);font-size:1.15rem"><a href={`/novedades/${entrada.id}/`} style="color:var(--ink)">{d.titulo}</a></h3>
+  {d.notaAntes !== undefined && d.notaDespues !== undefined && (
+    <div class="small" style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+      Nota <span class="pill" style={`background:${COLOR[lect(d.notaAntes)]};height:24px;min-width:34px;font-size:.8rem`}>{d.notaAntes}</span> →
+      <span class="pill" style={`background:${COLOR[lect(d.notaDespues)]};height:24px;min-width:34px;font-size:.8rem`}>{d.notaDespues}</span>
+    </div>
+  )}
+  {d.resumen && <p class="small muted" style="margin:0">{d.resumen}</p>}
+</article>

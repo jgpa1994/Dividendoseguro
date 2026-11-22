@@ -1,0 +1,39 @@
+# Editor visual en https://app.pagescms.org (entra con tu cuenta de GitHub y elige este repositorio)
+media:
+  input: public/media
+  output: /media
+content:
+  - name: entradas
+    label: Novedades
+    type: collection
+    path: src/content/entradas
+    filename: "{year}-{month}-{day}-{primary}.md"
+    view:
+      fields: [titulo, fecha, tipo]
+      sort: [fecha]
+      default:
+        sort: fecha
+        order: desc
+    fields:
+      - { name: titulo, label: Título, type: string, required: true }
+      - { name: fecha, label: Fecha, type: date, required: true }
+      - name: tipo
+        label: Tipo
+        type: select
+        options:
+          values: [Revisión de nota, Confirmación de nota, Noticia, Recorte, Resultados, Artículo]
+      - { name: empresas, label: "Empresas (id de la URL, p. ej. pep, bf-b)", type: string, list: true }
+      - { name: notaAntes, label: Nota anterior, type: number }
+      - { name: notaDespues, label: Nota nueva, type: number }
+      - { name: resumen, label: Resumen (1-2 frases), type: text }
+      - { name: borrador, label: Borrador (no publicar), type: boolean, default: false }
+      - { name: body, label: Texto, type: rich-text }
+  - name: empresas
+    label: Descripciones de empresas
+    type: collection
+    path: src/content/empresas
+    view:
+      fields: [nombre]
+    fields:
+      - { name: nombre, label: Nombre (opcional), type: string }
+      - { name: body, label: Descripción, type: rich-text }

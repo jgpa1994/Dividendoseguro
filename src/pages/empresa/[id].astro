@@ -1,0 +1,156 @@
+---
+import Base from '../../layouts/Base.astro';
+import Gauge from '../../components/Gauge.astro';
+import Chart from '../../components/Chart.astro';
+import empresas from '../../data/companies.json';
+import Entrada from '../../components/Entrada.astro';
+import { getEntry, render } from 'astro:content';
+import { entradasPublicadas } from '../../lib/entradas';
+import { COLOR, FONDO, pct, num, dinero, fecha, anos, afijos } from '../../lib/fmt';
+
+export function getStaticPaths() {
+  return empresas.map(e => ({ params: { id: e.id }, props: { e } }));
+}
+const { e } = Astro.props as { e: (typeof empresas)[number] };
+const perfil = await getEntry('empresas', e.id);
+const Perfil = perfil ? (await render(perfil)).Content : null;
+const novedades = (await entradasPublicadas()).filter(x => x.data.empresas.includes(e.id));
+const h = e.historico.filter(x => x.ano >= 2012);
+const A = h.map(x => x.ano);
+const m = e.metricas;
+const reit = e.reit;
+const banco = ['BANCO', 'SEGUROS', 'BDC'].includes(e.grupo.toUpperCase());
+const sector = empresas.filter(o => o.sector === e.sector && o.id !== e.id).slice(0, 6);
+const titulo = `¿Es seguro el dividendo de ${e.nombre} (${e.ticker})? Nota ${e.nota}/100`;
+const desc = `${e.nombre} obtiene ${e.nota}/100 (${e.lectura}) en seguridad del dividendo. Rentabilidad ${pct(e.rpd)}, ${anos(e.anosSubiendo)} subiendo el dividendo, payout y deuda analizados.`;
+const resumen = e.lectura === 'Muy seguro' ? 'El dividendo está muy bien respaldado por los resultados, el balance y la calidad del negocio.'
+  : e.lectura === 'Seguro' ? 'El dividendo está razonablemente cubierto, aunque algún indicador merece vigilancia.'
+  : e.lectura === 'Límite' ? 'Hay señales de tensión: el dividendo no está en peligro inmediato, pero el margen de seguridad es escaso.'
+  : 'Riesgo elevado de que el dividendo se congele o se recorte.';
+---
+<Base title={titulo} description={desc}>
+  <div class="wrap">
+    <div class="crumbs"><a href="/">Ranking</a> › <a href={`/?sector=${encodeURIComponent(e.sector)}#ranking`}>{e.sector}</a> › {e.nombre}</div>
+    <div class="cohead">
+      <div>
+        <div class="tk">{e.ticker}{e.mercado ? ` · ${e.mercado}` : ''}</div>
+        <h1 style="margin:2px 0 6px">{e.nombre}</h1>
+        <div class="muted">{e.industria} · {e.sector}</div>
+      </div>
+      <span class="badge" style={`background:${FONDO[e.lectura]};color:${COLOR[e.lectura]};font-size:.9rem;padding:7px 14px`}>Dividendo {e.lectura.toLowerCase()}</span>
+    </div>
+
+    <div class="scorecard">
+      <div class="card" style="text-align:center">
+        <div class="tiny" style="text-transform:uppercase;letter-spacing:.08em;font-weight:700">Seguridad del dividendo</div>
+        <Gauge nota={e.nota} lectura={e.lectura} />
+        <p class="small muted" style="margin:6px 4px 10px">{resumen}</p>
+        <div class="tiny">Revisada el {fecha(e.actualizado)} · próxima revisión {fecha(e.proxima)}</div>
+      </div>
+      <div class="card" style="padding:0;overflow:hidden" data-tikr={e.tikr} data-div={e.dividendoCorr ?? 0} data-compra={e.precioCompra ?? 0} data-cur={e.divisaPrecio} data-pre={afijos(e.divisaPrecio).pre} data-post={afijos(e.divisaPrecio).post}>
+        <dl class="facts" style="margin:0">
+          <div><dt>Dividendo anual previsto</dt><dd>{dinero(e.dividendo, e.divisaDividendo, 2)}</dd></div>
+          <div><dt>Rentabilidad</dt><dd><span data-v="rpd">{pct(e.rpd)}</span><small>media 5 años: {pct(e.rpdMedia5)}</small></dd></div>
+          <div><dt>Crecimiento esperado</dt><dd class={m.crecDivEsperado === null ? '' : m.crecDivEsperado < 0 ? 'neg' : ''}>{pct(m.crecDivEsperado, 1, true)}<small>próximo ejercicio</small></dd></div>
+          <div><dt>Años subiendo</dt><dd>{e.anosSubiendo ?? '—'}</dd></div>
+          <div><dt>Años sin recortar</dt><dd>{e.anosSinRecorte ?? '—'}</dd></div>
+          <div><dt>Crec. dividendo 5 años</dt><dd>{pct(m.crecDiv5)}<small>anual compuesto</small></dd></div>
+          <div><dt>Precio</dt><dd><span data-v="precio">{dinero(e.precio, e.divisaPrecio)}</span><small data-v="fecha-precio">a fecha de actualización</small></dd></div>
+          <div><dt>Precio de compra</dt><dd>{dinero(e.precioCompra, e.divisaPrecio, 0)}</dd></div>
+          <div><dt>Precio vs. compra</dt><dd><span data-v="vs" class={e.vsCompra === null ? '' : e.vsCompra <= 0 ? 'pos' : 'neg'}>{pct(e.vsCompra, 1, true)}</span><small>{e.vsCompra === null ? '' : e.vsCompra <= 0 ? 'por debajo del precio de compra' : 'por encima del precio de compra'}</small></dd></div>
+        </dl>
+      </div>
+    </div>
+
+    {Perfil && (
+      <section class="section">
+        <h2>Sobre {e.nombre}</h2>
+        <div class="card prose" style="max-width:none"><Perfil /></div>
+      </section>
+    )}
+
+    {novedades.length > 0 && (
+      <section class="section">
+        <h2>Novedades de {e.nombre}</h2>
+        <div class="grid">{novedades.slice(0, 5).map(n => <Entrada entrada={n} compacta />)}</div>
+      </section>
+    )}
+
+    <section class="section">
+      <h2>Indicadores clave</h2>
+      <div class="card" style="padding:4px 8px">
+        <dl class="metrics" style="margin:0">
+          {reit
+            ? <div><dt>Payout sobre AFFO</dt><dd>{pct(m.payoutAffo, 0)}</dd></div>
+            : <div><dt>Payout sobre beneficio</dt><dd>{m.payout !== null && m.payout < 0 ? 'Pérdidas' : pct(m.payout, 0)}</dd></div>}
+          <div><dt>Payout sobre flujo de caja libre</dt><dd>{banco ? 'n/a' : pct(m.payoutFcf, 0)}</dd></div>
+          <div><dt>Deuda neta / EBITDA</dt><dd>{banco ? 'n/a' : m.deudaEbitda === null ? '—' : `${num(m.deudaEbitda, 1)}x`}</dd></div>
+          <div><dt>Cobertura de intereses</dt><dd>{banco ? 'n/a' : m.coberturaIntereses === null ? '—' : `${num(m.coberturaIntereses, 1)}x`}</dd></div>
+          <div><dt>Margen operativo</dt><dd>{banco ? 'n/a' : pct(m.margen)}</dd></div>
+          <div><dt>ROIC</dt><dd>{pct(m.roic)}</dd></div>
+          <div><dt>Crec. dividendo último año</dt><dd>{pct(m.crecDiv1, 1, true)}</dd></div>
+          <div><dt>Crec. BPA 5 años</dt><dd>{pct(m.crecBpa5)}</dd></div>
+        </dl>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Evolución</h2>
+      <div class="grid g2">
+        <Chart titulo="Dividendo por acción" sub={`En ${e.divisaDividendo === 'GBX' ? 'peniques' : e.divisaDividendo ?? ''} · último ejercicio cerrado destacado`} anos={A}
+          series={[{ nombre: 'Dividendo', color: '#1f6b4f', valores: h.map(x => x.dpa) }]} ultimoDestacado />
+        {reit
+          ? <Chart titulo="Payout sobre AFFO" sub="Dividendo / AFFO por acción" anos={A} tipo="lineas" formato="pct"
+              series={[{ nombre: 'Payout AFFO', color: '#2f6fd6', valores: h.map(x => x.payoutAffo) }]} />
+          : <Chart titulo="Payout" sub="Dividendo / beneficio y dividendo / flujo de caja libre" anos={A} tipo="lineas" formato="pct"
+              series={[{ nombre: 'Sobre beneficio', color: '#2f6fd6', valores: h.map(x => x.payout !== null && x.payout > 0 && x.payout < 3 ? x.payout : null) },
+                       ...(banco ? [] : [{ nombre: 'Sobre FCF', color: '#c27c0e', valores: h.map(x => x.payoutFcf !== null && x.payoutFcf > 0 && x.payoutFcf < 3 ? x.payoutFcf : null) }])]} />}
+        {reit
+          ? <Chart titulo="AFFO y dividendo por acción" anos={A} tipo="lineas"
+              series={[{ nombre: 'AFFO', color: '#2f6fd6', valores: h.map(x => x.affo) }, { nombre: 'Dividendo', color: '#1f6b4f', valores: h.map(x => x.dpa) }]} />
+          : <Chart titulo="Beneficio, flujo de caja y dividendo por acción" anos={A} tipo="lineas"
+              series={[{ nombre: 'BPA', color: '#2f6fd6', valores: h.map(x => x.bpa) }, ...(banco ? [] : [{ nombre: 'FCF', color: '#c27c0e', valores: h.map(x => x.fcf) }]), { nombre: 'Dividendo', color: '#1f6b4f', valores: h.map(x => x.dpa) }]} />}
+        {banco
+          ? <Chart titulo="ROIC" anos={A} tipo="lineas" formato="pct" series={[{ nombre: 'ROIC', color: '#1f6b4f', valores: h.map(x => x.roic) }]} />
+          : <Chart titulo="Deuda neta / EBITDA" sub="Veces" anos={A} formato="x" series={[{ nombre: 'Deuda neta / EBITDA', color: '#7b8a82', valores: h.map(x => x.deudaEbitda) }]} />}
+      </div>
+    </section>
+
+    {e.historialNota.length > 0 && (
+      <section class="section">
+        <h2>Historial de la nota</h2>
+        <div class="card">
+          <ul class="timeline">
+            {[...e.historialNota].reverse().slice(0, 10).map(n => {
+              const l = n.nota >= 80 ? 'Muy seguro' : n.nota >= 60 ? 'Seguro' : n.nota >= 49 ? 'Límite' : 'No seguro';
+              return <li><span class="pill" style={`background:${COLOR[l]}`}>{n.nota}</span><span>{l}</span><span class="tiny" style="margin-left:auto">{fecha(n.fecha)}</span></li>;
+            })}
+          </ul>
+        </div>
+      </section>
+    )}
+
+    <div class="note">
+      La nota combina indicadores financieros (payout, deuda, cobertura, crecimiento) con la calidad del negocio y la política de dividendos.{' '}
+      <a href="/metodologia/">Así calculamos la nota</a>. Información educativa, no es una recomendación de inversión.
+    </div>
+
+    {sector.length > 0 && (
+      <section class="section">
+        <h2>Otras empresas de {e.sector.toLowerCase()}</h2>
+        <div class="grid g3">
+          {sector.map(o => (
+            <a class="card" href={`/empresa/${o.id}/`} style="display:flex;align-items:center;gap:14px;color:inherit;text-decoration:none">
+              <span class="pill" style={`background:${COLOR[o.lectura]}`}>{o.nota}</span>
+              <span><b>{o.nombre}</b><br /><span class="tiny">{o.ticker} · {o.lectura}</span></span>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+  </div>
+  <script>
+    import { actualizarPrecios } from '../../lib/precios';
+    actualizarPrecios();
+  </script>
+</Base>

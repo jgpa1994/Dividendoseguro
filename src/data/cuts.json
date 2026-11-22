@@ -1,0 +1,29 @@
+[
+ {
+  "fecha": "2026-05-27",
+  "ticker": "PETS",
+  "id": "pets",
+  "nombre": "Pets at Home",
+  "recorte": 0.431,
+  "notaPrevia": 36,
+  "comentario": "Rebase a payout 50% (anunciado 31-mar-26). Div. anual 13,0p -> 7,4p"
+ },
+ {
+  "fecha": "2026-02-25",
+  "ticker": "DGE",
+  "id": "dge",
+  "nombre": "Diageo",
+  "recorte": 0.5,
+  "notaPrevia": 53,
+  "comentario": "Algo sorpresa. Cambio de directiva. Hay que tenerlo en cuenta"
+ },
+ {
+  "fecha": "2026-02-20",
+  "ticker": "LYB",
+  "id": "lyb",
+  "nombre": "LyondellBasell",
+  "recorte": 0.5,
+  "notaPrevia": 40,
+  "comentario": "Recorte previsto. Yield inicial 11%"
+ }
+]

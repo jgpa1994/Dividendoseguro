@@ -1,0 +1,30 @@
+---
+import Base from '../../layouts/Base.astro';
+import { render } from 'astro:content';
+import { entradasPublicadas } from '../../lib/entradas';
+import empresas from '../../data/companies.json';
+import { COLOR } from '../../lib/fmt';
+export async function getStaticPaths() {
+  return (await entradasPublicadas()).map(e => ({ params: { id: e.id }, props: { e } }));
+}
+const { e } = Astro.props;
+const { Content } = await render(e);
+const d = e.data;
+const emp = d.empresas.map((id: string) => empresas.find(x => x.id === id)).filter(Boolean) as typeof empresas;
+const f = d.fecha.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+---
+<Base title={`${d.titulo} — DividendoSeguro`} description={d.resumen ?? d.titulo}>
+  <article class="wrap prose" style="max-width:760px">
+    <div class="crumbs"><a href="/novedades/">Novedades</a> › {d.tipo}</div>
+    <h1>{d.titulo}</h1>
+    <p class="tiny">{f}</p>
+    {emp.length > 0 && (
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 22px">
+        {emp.map(x => <a class="card" href={`/empresa/${x.id}/`} style="padding:10px 14px;display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit">
+          <span class="pill" style={`background:${COLOR[x.lectura]}`}>{x.nota}</span><span><b>{x.nombre}</b><br /><span class="tiny">{x.ticker} · nota actual</span></span></a>)}
+      </div>
+    )}
+    <Content />
+    <p class="note" style="margin-top:30px">Información educativa, no es una recomendación de inversión.</p>
+  </article>
+</Base>

@@ -1,0 +1,55 @@
+---
+import Base from '../layouts/Base.astro';
+import { COLOR, FONDO } from '../lib/fmt';
+const tramos = [['Muy seguro', '80 – 100', 'Dividendo muy bien respaldado. Recorte muy improbable salvo crisis grave.'],
+  ['Seguro', '60 – 79', 'Dividendo razonablemente cubierto, con algún punto a vigilar.'],
+  ['Límite', '49 – 59', 'Margen de seguridad escaso: riesgo real de congelación.'],
+  ['No seguro', '0 – 48', 'Riesgo elevado de recorte o congelación prolongada.']];
+---
+<Base title="Metodología — cómo calculamos la nota de seguridad del dividendo" activo="metodologia"
+  description="Cómo funciona la puntuación de 0 a 100 de DividendoSeguro: indicadores financieros, calidad del negocio y criterios por tipo de empresa.">
+  <div class="wrap prose">
+    <h1 style="margin-top:36px">Cómo calculamos la nota</h1>
+    <p class="muted">La nota de 0 a 100 estima la probabilidad de que una empresa mantenga y haga crecer su dividendo en los próximos años. No mide si la acción está barata ni si va a subir.</p>
+
+    <h2>Qué significa cada tramo</h2>
+    <div class="grid g2" style="margin-bottom:10px">
+      {tramos.map(([l, r, t]) => (
+        <div class="card" style={`border-left:4px solid ${COLOR[l]}`}>
+          <span class="badge" style={`background:${FONDO[l]};color:${COLOR[l]}`}>{l}</span> <b class="num">{r}</b>
+          <p class="small muted" style="margin:8px 0 0">{t}</p>
+        </div>
+      ))}
+    </div>
+
+    <h2>Dos bloques: números y negocio</h2>
+    <p>La nota combina un <b>bloque cuantitativo</b> y un <b>bloque cualitativo</b>. El peso de cada bloque y de cada indicador cambia según el tipo de empresa.</p>
+    <h3>Bloque cuantitativo</h3>
+    <ul>
+      <li><b>Payout</b>: qué parte del beneficio y del flujo de caja libre se va en dividendos.</li>
+      <li><b>Balance</b>: deuda neta / EBITDA y cobertura de intereses.</li>
+      <li><b>Rentabilidad del negocio</b>: margen operativo y ROIC.</li>
+      <li><b>Crecimiento</b>: del beneficio, del flujo de caja, del margen y, sobre todo, el crecimiento esperado del dividendo.</li>
+      <li><b>Historial</b>: años seguidos subiendo el dividendo y años sin recortarlo. La mitad de esta puntuación premia llevar al menos 5 años subiendo y la otra mitad llevar al menos 10 años sin recortar, así un dividendo congelado no se castiga igual que uno recortado.</li>
+    </ul>
+    <p>Cada indicador se compara con un valor de referencia propio de su grupo. Si el punto de partida de un crecimiento es negativo (por ejemplo, venir de pérdidas), ese crecimiento no puntúa.</p>
+    <h3>Bloque cualitativo</h3>
+    <ul>
+      <li>Ventaja competitiva duradera del negocio.</li>
+      <li>Calidad de la gestión y de la asignación de capital.</li>
+      <li>Incertidumbre sobre el futuro del negocio.</li>
+      <li>Calificación crediticia.</li>
+      <li>Volatilidad de la acción.</li>
+      <li>Política de dividendo declarada (si menciona el dividendo y su crecimiento).</li>
+    </ul>
+
+    <h2>Cada tipo de empresa, con su vara de medir</h2>
+    <p>No se puede juzgar igual a un banco que a una eléctrica. Usamos criterios distintos para: empresas generales, consumo defensivo, utilities, REITs (con AFFO en lugar de beneficio), bancos y aseguradoras (sin deuda/EBITDA ni flujo de caja libre), BDC, telecomunicaciones y oleoductos.</p>
+
+    <h2>El modelo propone, el analista decide</h2>
+    <p>El modelo calcula una nota de partida. Después revisamos cada empresa y podemos ajustarla cuando hay información que los números no recogen: una escisión, un fin de patentes, un dividendo congelado o una guía de la dirección. Cada cambio queda registrado en el historial de la empresa.</p>
+
+    <h2>Actualización</h2>
+    <p>Revisamos cada empresa tras sus resultados anuales y, como mínimo, cada trimestre. Los recortes se registran en el <a href="/recortes/">registro de recortes</a>, con la nota que tenían antes, para que puedas juzgar el sistema.</p>
+  </div>
+</Base>

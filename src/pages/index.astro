@@ -1,0 +1,147 @@
+---
+import Base from '../layouts/Base.astro';
+import empresas from '../data/companies.json';
+import recortes from '../data/cuts.json';
+import { COLOR, FONDO, pct, dinero, fecha, afijos } from '../lib/fmt';
+import Entrada from '../components/Entrada.astro';
+import { entradasPublicadas } from '../lib/entradas';
+const novedades = (await entradasPublicadas()).slice(0, 3);
+
+const LECTURAS = ['Muy seguro', 'Seguro', 'Límite', 'No seguro'];
+const cuenta = Object.fromEntries(LECTURAS.map(l => [l, empresas.filter(e => e.lectura === l).length]));
+const sectores = [...new Set(empresas.map(e => e.sector))].sort();
+const cambios = empresas
+  .flatMap(e => {
+    const h = e.historialNota;
+    if (h.length < 2) return [];
+    const a = h[h.length - 2], b = h[h.length - 1];
+    return a.nota !== b.nota ? [{ e, de: a.nota, a: b.nota, fecha: b.fecha }] : [];
+  })
+  .sort((p, q) => (q.fecha ?? '').localeCompare(p.fecha ?? '') || Math.abs(q.a - q.de) - Math.abs(p.a - p.de))
+  .slice(0, 6);
+---
+<Base title="DividendoSeguro — ¿Es seguro el dividendo? Puntuación de 0 a 100" activo="ranking">
+  <section class="hero">
+    <div class="wrap">
+      <h1>¿Es seguro el dividendo que cobras?</h1>
+      <p>Puntuamos de 0 a 100 la seguridad del dividendo de {empresas.length} empresas de calidad de EE. UU. y Europa, combinando sus números (payout, deuda, flujo de caja, crecimiento) con la calidad del negocio.</p>
+      <div class="dist">
+        {LECTURAS.map(l => (
+          <a href={`/?lectura=${encodeURIComponent(l)}#ranking`} data-lectura={l}>
+            <span class="dot" style={`background:${COLOR[l]};box-shadow:0 0 0 3px rgba(255,255,255,.15)`}></span>
+            <b>{cuenta[l]}</b> {l}
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap lift">
+    <div class="grid g2">
+      <div class="card">
+        <h3>Últimos cambios de nota</h3>
+        <ul class="timeline">
+          {cambios.map(c => (
+            <li>
+              <span class="pill" style={`background:${COLOR[c.e.lectura]}`}>{c.a}</span>
+              <span style="flex:1"><a href={`/empresa/${c.e.id}/`}><b>{c.e.nombre}</b></a> <span class="tiny">{c.e.ticker}</span></span>
+              <span class={`num small ${c.a > c.de ? 'pos' : 'neg'}`}>{c.a > c.de ? '▲' : '▼'} {c.de} → {c.a}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Recortes de dividendo recientes</h3>
+        <ul class="timeline">
+          {recortes.slice(0, 4).map(r => (
+            <li>
+              <span class="badge" style="background:#fdeee6;color:#c2410c">−{Math.round((r.recorte ?? 0) * 100)} %</span>
+              <span style="flex:1">{r.id ? <a href={`/empresa/${r.id}/`}><b>{r.nombre}</b></a> : <b>{r.nombre}</b>}</span>
+              <span class="tiny">{fecha(r.fecha)}</span>
+            </li>
+          ))}
+        </ul>
+        <p class="small" style="margin:12px 0 0"><a href="/recortes/">Ver el registro completo →</a></p>
+      </div>
+    </div>
+
+    {novedades.length > 0 && (
+      <section class="section">
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Novedades</h2><a class="small" href="/novedades/">Ver todas →</a></div>
+        <div class="grid g3">{novedades.map(n => <Entrada entrada={n} compacta />)}</div>
+      </section>
+    )}
+
+    <section id="ranking" class="section">
+      <h2>Ranking de seguridad del dividendo</h2>
+      <div class="tools">
+        <input id="q" type="search" placeholder="Buscar empresa o ticker…" aria-label="Buscar" />
+        <select id="fs" aria-label="Sector"><option value="">Todos los sectores</option>{sectores.map(s => <option>{s}</option>)}</select>
+        <select id="fl" aria-label="Lectura"><option value="">Todas las lecturas</option>{LECTURAS.map(l => <option>{l}</option>)}</select>
+      </div>
+      <div class="card" style="padding:6px 8px">
+        <div class="tablewrap">
+          <table class="rank" id="tabla">
+            <thead><tr>
+              <th data-k="nombre" data-t="s">Empresa</th>
+              <th data-k="nota" data-dir="-1" class="r">Nota</th>
+              <th data-k="sector" data-t="s">Sector</th>
+              <th data-k="rpd" class="r">Rentab.</th>
+              <th data-k="anos" class="r">Años subiendo</th>
+              <th data-k="precio" class="r">Precio</th>
+              <th data-k="vs" class="r" title="Distancia del precio actual al precio de compra">vs. compra</th>
+            </tr></thead>
+            <tbody>
+              {empresas.map(e => (
+                <tr data-tikr={e.tikr} data-div={e.dividendoCorr ?? 0} data-compra={e.precioCompra ?? 0} data-cur={e.divisaPrecio} data-pre={afijos(e.divisaPrecio).pre} data-post={afijos(e.divisaPrecio).post} data-nombre={`${e.nombre} ${e.ticker}`.toLowerCase()} data-sector={e.sector} data-lectura={e.lectura}
+                    data-nota={e.nota} data-rpd={e.rpd ?? -1} data-anos={e.anosSubiendo ?? -1} data-precio={e.precio ?? -1} data-vs={e.vsCompra ?? 99}>
+                  <td><div class="co"><a href={`/empresa/${e.id}/`}>{e.nombre}</a><span>{e.ticker}{e.mercado ? ` · ${e.mercado}` : ''}</span></div></td>
+                  <td class="r"><span class="pill" style={`background:${COLOR[e.lectura]}`} title={e.lectura}>{e.nota}</span></td>
+                  <td class="small muted">{e.sector}</td>
+                  <td class="r num" data-v="rpd">{pct(e.rpd)}</td>
+                  <td class="r num">{e.anosSubiendo ?? '—'}</td>
+                  <td class="r num" data-v="precio">{dinero(e.precio, e.divisaPrecio)}</td>
+                  <td data-v="vs" class={`r num ${e.vsCompra === null ? '' : e.vsCompra <= 0 ? 'pos' : 'neg'}`}>{pct(e.vsCompra, 1, true)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="tiny" style="margin-top:10px">Precios a la fecha de la última actualización de datos. "vs. compra" en verde = cotiza por debajo de nuestro precio de compra.</p>
+    </section>
+  </div>
+
+  <script>
+    import { actualizarPrecios } from '../lib/precios';
+    const tabla = document.getElementById('tabla') as HTMLTableElement;
+    const tbody = tabla.tBodies[0];
+    const q = document.getElementById('q') as HTMLInputElement;
+    const fs = document.getElementById('fs') as HTMLSelectElement;
+    const fl = document.getElementById('fl') as HTMLSelectElement;
+    const p = new URLSearchParams(location.search);
+    if (p.get('lectura')) fl.value = p.get('lectura')!;
+    if (p.get('sector')) fs.value = p.get('sector')!;
+    function filtrar() {
+      const t = q.value.trim().toLowerCase();
+      for (const tr of Array.from(tbody.rows)) {
+        const d = tr.dataset;
+        tr.hidden = !!((t && !d.nombre!.includes(t)) || (fs.value && d.sector !== fs.value) || (fl.value && d.lectura !== fl.value));
+      }
+    }
+    [q, fs, fl].forEach(el => el.addEventListener('input', filtrar));
+    tabla.querySelectorAll('th').forEach(th => th.addEventListener('click', () => {
+      const k = th.dataset.k!, texto = th.dataset.t === 's';
+      const dir = th.dataset.dir === '-1' ? 1 : th.dataset.dir === '1' ? -1 : (texto ? 1 : -1);
+      tabla.querySelectorAll('th').forEach(o => delete o.dataset.dir);
+      th.dataset.dir = String(dir);
+      const filas = Array.from(tbody.rows).sort((a, b) => {
+        const x = a.dataset[k]!, y = b.dataset[k]!;
+        return (texto ? x.localeCompare(y, 'es') : Number(x) - Number(y)) * dir;
+      });
+      filas.forEach(f => tbody.appendChild(f));
+    }));
+    filtrar();
+    actualizarPrecios();
+  </script>
+</Base>

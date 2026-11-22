@@ -1,0 +1,45 @@
+---
+// Gráfico SVG generado en la compilación (sin JavaScript): barras o líneas.
+interface Serie { nombre: string; color: string; valores: (number | null)[] }
+interface Props {
+  titulo: string; sub?: string; anos: number[]; series: Serie[];
+  tipo?: 'barras' | 'lineas'; formato?: 'num' | 'pct' | 'x'; ultimoDestacado?: boolean;
+}
+const { titulo, sub, anos, series, tipo = 'barras', formato = 'num', ultimoDestacado = false } = Astro.props;
+const W = 520, H = 210, L = 46, Rr = 10, T = 12, B = 26;
+const todos = series.flatMap(s => s.valores).filter((v): v is number => v !== null && Number.isFinite(v));
+const hay = todos.length > 0;
+let min = Math.min(0, ...todos), max = Math.max(0, ...todos);
+if (max === min) max = min + 1;
+const pad = (max - min) * 0.08; max += pad; if (min < 0) min -= pad;
+const y = (v: number) => T + (H - T - B) * (1 - (v - min) / (max - min));
+const n = anos.length, paso = (W - L - Rr) / Math.max(n, 1);
+const x = (i: number) => L + paso * (i + 0.5);
+const fmt = (v: number) => formato === 'pct' ? `${Math.round(v * 100)}%` : formato === 'x' ? `${v.toFixed(1)}x` : (Math.abs(v) >= 100 ? v.toFixed(0) : v.toFixed(2)).replace('.', ',');
+const ticks = Array.from({ length: 5 }, (_, i) => min + (max - min) * i / 4);
+const bw = Math.min(26, paso * 0.7 / series.length);
+const cada = n > 12 ? 2 : 1;
+---
+<div class="card chart">
+  <h3>{titulo}</h3>
+  {sub && <div class="sub">{sub}</div>}
+  {hay ? (
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img" aria-label={titulo}>
+      {ticks.map(t => <g><line x1={L} x2={W - Rr} y1={y(t)} y2={y(t)} stroke="#edf0ed" /><text x={L - 6} y={y(t) + 4} text-anchor="end" font-size="10" fill="#7b8a82">{fmt(t)}</text></g>)}
+      <line x1={L} x2={W - Rr} y1={y(0)} y2={y(0)} stroke="#c9d1cb" />
+      {anos.map((a, i) => i % cada === (n - 1) % cada ? <text x={x(i)} y={H - 8} text-anchor="middle" font-size="10" fill="#7b8a82">{String(a).slice(2) === String(a).slice(2) ? `'${String(a).slice(2)}` : a}</text> : null)}
+      {tipo === 'barras' ? series.map((s, k) => s.valores.map((v, i) => v === null ? null : (
+        <rect x={x(i) - (bw * series.length) / 2 + k * bw} y={Math.min(y(v), y(0))} width={bw - 2} height={Math.max(1, Math.abs(y(v) - y(0)))} rx="2"
+          fill={ultimoDestacado && i === n - 1 ? '#7fd4a3' : s.color}><title>{`${anos[i]}: ${fmt(v)}`}</title></rect>
+      ))) : series.map(s => {
+        const pts = s.valores.map((v, i) => v === null ? null : `${x(i).toFixed(1)},${y(v).toFixed(1)}`);
+        const tramos: string[][] = []; let cur: string[] = [];
+        pts.forEach(p => { if (p) cur.push(p); else if (cur.length) { tramos.push(cur); cur = []; } });
+        if (cur.length) tramos.push(cur);
+        return <g>{tramos.map(t => <polyline points={t.join(' ')} fill="none" stroke={s.color} stroke-width="2.4" stroke-linejoin="round" />)}
+          {s.valores.map((v, i) => v === null ? null : <circle cx={x(i)} cy={y(v)} r="3" fill={s.color}><title>{`${s.nombre} ${anos[i]}: ${fmt(v)}`}</title></circle>)}</g>;
+      })}
+    </svg>
+  ) : <p class="muted small">Sin datos suficientes.</p>}
+  {series.length > 1 && <div class="tiny" style="display:flex;gap:14px;margin-top:6px">{series.map(s => <span><span class="dot" style={`background:${s.color}`}></span> {s.nombre}</span>)}</div>}
+</div>

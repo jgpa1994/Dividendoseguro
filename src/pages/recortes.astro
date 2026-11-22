@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro';
+import recortes from '../data/cuts.json';
+import { fecha, COLOR } from '../lib/fmt';
+const lect = (n: number) => n >= 80 ? 'Muy seguro' : n >= 60 ? 'Seguro' : n >= 49 ? 'Límite' : 'No seguro';
+---
+<Base title="Registro de recortes de dividendo — DividendoSeguro" description="Todas las empresas de nuestra cobertura que han recortado el dividendo y qué nota tenían antes del recorte." activo="recortes">
+  <div class="wrap prose" style="max-width:900px">
+    <h1 style="margin-top:36px">Registro de recortes</h1>
+    <p class="muted">Cada recorte de dividendo en las empresas que seguimos, con la nota que les dábamos en ese momento. Es la mejor forma de comprobar si la nota funciona: un buen sistema debería avisar <em>antes</em>.</p>
+    <div class="card" style="padding:6px 8px">
+      <table class="rank">
+        <thead><tr><th>Fecha</th><th>Empresa</th><th class="r">Recorte</th><th class="r">Nota previa</th><th>Comentario</th></tr></thead>
+        <tbody>
+          {recortes.map(r => (
+            <tr>
+              <td class="num small">{fecha(r.fecha)}</td>
+              <td><div class="co">{r.id ? <a href={`/empresa/${r.id}/`}>{r.nombre}</a> : <b>{r.nombre}</b>}<span>{r.ticker}</span></div></td>
+              <td class="r num neg">−{Math.round((r.recorte ?? 0) * 100)} %</td>
+              <td class="r">{r.notaPrevia != null && <span class="pill" style={`background:${COLOR[lect(r.notaPrevia)]}`}>{r.notaPrevia}</span>}</td>
+              <td class="small muted">{r.comentario}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</Base>

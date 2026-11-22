@@ -1,0 +1,61 @@
+---
+import '../styles/global.css';
+import meta from '../data/meta.json';
+interface Props { title: string; description?: string; activo?: string }
+const { title, description = 'Puntuación de 0 a 100 sobre la seguridad del dividendo de más de 80 empresas, con metodología propia cuantitativa y cualitativa.', activo = '' } = Astro.props;
+const canonical = new URL(Astro.url.pathname, Astro.site);
+const SUBSTACK = 'https://dividendoseguro.substack.com';
+---
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="canonical" href={canonical} />
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="alternate" type="application/rss+xml" title="DividendoSeguro — Novedades" href="/rss.xml" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content={canonical} />
+  <meta property="og:locale" content="es_ES" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="top">
+    <div class="wrap">
+      <a class="logo" href="/">
+        <svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 40a18 18 0 0 1 36 0" fill="none" stroke="#e9f5ee" stroke-width="6" stroke-linecap="round"/><path d="M32 40l9-12" stroke="#7fd4a3" stroke-width="5" stroke-linecap="round"/><circle cx="32" cy="40" r="4" fill="#7fd4a3"/></svg>
+        DividendoSeguro
+      </a>
+      <nav class="nav">
+        <a href="/#ranking" class={activo === 'ranking' ? 'on' : ''}>Ranking</a>
+        <a href="/novedades/" class={activo === 'novedades' ? 'on' : ''}>Novedades</a>
+        <a href="/recortes/" class={activo === 'recortes' ? 'on' : ''}>Recortes</a>
+        <a href="/metodologia/" class={activo === 'metodologia' ? 'on' : ''}>Metodología</a>
+        <a class="btn" href={SUBSTACK}>Newsletter</a>
+      </nav>
+    </div>
+  </header>
+  <main>
+    <slot />
+  </main>
+  <footer>
+    <div class="wrap cols">
+      <div style="max-width:620px">
+        <strong>DividendoSeguro</strong> · Datos actualizados el {new Date(meta.exportado).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}.<br />
+        Contenido informativo y educativo. No es asesoramiento ni una recomendación personalizada de inversión.
+        Las puntuaciones son una opinión basada en una metodología propia y pueden contener errores. Haz tu propio análisis.{' '}
+        <a href="/aviso-legal/">Aviso legal</a>.
+      </div>
+      <div>
+        <a href="/novedades/">Novedades</a> · <a href="/metodologia/">Metodología</a> · <a href="/recortes/">Recortes</a> · <a href={SUBSTACK}>Newsletter</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
